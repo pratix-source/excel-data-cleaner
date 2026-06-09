@@ -1,0 +1,1362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Free Excel Data Cleaner - Remove empty rows, duplicates, and clean your spreadsheets 100% in your browser." />
+  <meta name="keywords" content="excel cleaner, data cleaner, remove duplicates, csv cleaner" />
+  <meta property="og:title" content="Excel Data Cleaner - Free Online Tool | Pratix.io" />
+  <meta property="og:description" content="Clean Excel & CSV files instantly. 100% client-side processing." />
+  <link rel="canonical" href="https://cleaner.pratix.io" />
+
+  <title>Excel Data Cleaner - Free Online Tool | Pratix.io</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Correct XLSX full build -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+  <style>
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes glowPulse {
+      0%, 100% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.15); }
+      50% { box-shadow: 0 0 30px rgba(59, 130, 246, 0.35); }
+    }
+
+    .card-animate { animation: fadeIn 0.5s ease-out; }
+    .icon-glow { animation: glowPulse 3s ease-in-out infinite; }
+
+    #langDropdown {
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(-10px);
+      transition: all 0.2s ease;
+    }
+
+    #langDropdown.open {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
+    }
+
+    .dropzone { transition: all 0.3s ease; }
+
+    .dropzone.drag-over {
+      background-color: rgba(59, 130, 246, 0.1);
+      border-color: #3b82f6;
+    }
+
+    table { font-size: 0.75rem; }
+    thead { background-color: #f8fafc; }
+  </style>
+</head>
+
+<body class="bg-zinc-50 text-zinc-900 font-sans min-h-screen flex flex-col">
+  <nav class="sticky top-0 z-50 backdrop-blur-md bg-white/70 border-b border-zinc-200 px-4 sm:px-8 py-4 flex items-center justify-between">
+    <a href="https://pratix.io" class="flex items-center gap-2.5 hover:opacity-80 transition" aria-label="Pratix.io">
+      <div class="w-9 h-9 bg-gradient-to-tr from-blue-600 to-indigo-500 rounded-xl flex items-center justify-center font-bold text-white">
+        C
+      </div>
+      <div>
+        <span class="font-bold text-lg tracking-tight">Excel Cleaner</span>
+        <p class="text-[10px] text-zinc-400">
+          by <span class="font-semibold text-blue-600">Pratix.io</span>
+        </p>
+      </div>
+    </a>
+
+    <div class="relative" id="langDropdownContainer">
+      <button id="langToggle" class="px-3.5 py-1.5 bg-zinc-100 border border-zinc-200 rounded-lg hover:bg-zinc-200 transition flex items-center gap-2 text-sm font-medium text-zinc-700 cursor-pointer" type="button">
+        <i data-lucide="globe" class="w-4 h-4"></i>
+        <span id="langDisplay">EN</span>
+        <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
+      </button>
+
+      <div id="langDropdown" class="absolute right-0 mt-2 w-56 bg-white border border-zinc-200 rounded-xl p-1.5 shadow-xl grid grid-cols-2 gap-0.5 z-50 text-zinc-700">
+        <button class="lang-option w-full text-left px-3 py-2 text-xs rounded-lg hover:bg-zinc-100 transition cursor-pointer font-medium" data-lang="en" type="button">🇬🇧 English</button>
+        <button class="lang-option w-full text-left px-3 py-2 text-xs rounded-lg hover:bg-zinc-100 transition cursor-pointer font-medium" data-lang="tr" type="button">🇹🇷 Türkçe</button>
+        <button class="lang-option w-full text-left px-3 py-2 text-xs rounded-lg hover:bg-zinc-100 transition cursor-pointer font-medium" data-lang="de" type="button">🇩🇪 Deutsch</button>
+        <button class="lang-option w-full text-left px-3 py-2 text-xs rounded-lg hover:bg-zinc-100 transition cursor-pointer font-medium" data-lang="fr" type="button">🇫🇷 Français</button>
+        <button class="lang-option w-full text-left px-3 py-2 text-xs rounded-lg hover:bg-zinc-100 transition cursor-pointer font-medium" data-lang="es" type="button">🇪🇸 Español</button>
+        <button class="lang-option w-full text-left px-3 py-2 text-xs rounded-lg hover:bg-zinc-100 transition cursor-pointer font-medium" data-lang="it" type="button">🇮🇹 Italiano</button>
+        <button class="lang-option w-full text-left px-3 py-2 text-xs rounded-lg hover:bg-zinc-100 transition cursor-pointer font-medium" data-lang="nl" type="button">🇳🇱 Nederlands</button>
+        <button class="lang-option w-full text-left px-3 py-2 text-xs rounded-lg hover:bg-zinc-100 transition cursor-pointer font-medium" data-lang="sv" type="button">🇸🇪 Svenska</button>
+        <button class="lang-option w-full text-left px-3 py-2 text-xs rounded-lg hover:bg-zinc-100 transition cursor-pointer font-medium" data-lang="da" type="button">🇩🇰 Dansk</button>
+        <button class="lang-option w-full text-left px-3 py-2 text-xs rounded-lg hover:bg-zinc-100 transition cursor-pointer font-medium" data-lang="no" type="button">🇳🇴 Norsk</button>
+        <button class="lang-option w-full text-left px-3 py-2 text-xs rounded-lg hover:bg-zinc-100 transition cursor-pointer font-medium" data-lang="fi" type="button">🇫🇮 Suomi</button>
+        <button class="lang-option w-full text-left px-3 py-2 text-xs rounded-lg hover:bg-zinc-100 transition cursor-pointer font-medium" data-lang="zh" type="button">🇨🇳 中文</button>
+      </div>
+    </div>
+  </nav>
+
+  <header class="px-4 sm:px-8 py-12 sm:py-16 text-center max-w-4xl mx-auto flex-shrink-0">
+    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-600 text-xs font-medium mb-4">
+      <span class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
+      <span id="badge1">100% Client-Side Processing</span>
+    </div>
+
+    <h1 id="heroTitle" class="text-4xl sm:text-5xl font-extrabold tracking-tight mb-4">
+      Excel Data Cleaner
+    </h1>
+
+    <p id="heroDesc" class="text-base sm:text-lg text-zinc-600 max-w-2xl mx-auto leading-relaxed mb-8">
+      Remove empty rows, delete duplicates, trim whitespace, and clean your spreadsheets instantly.
+    </p>
+
+    <div class="flex flex-wrap justify-center gap-3 text-xs sm:text-sm text-zinc-500">
+      <div class="flex items-center gap-2 px-4 py-2 bg-white border border-zinc-200 rounded-xl">
+        <i data-lucide="shield-check" class="w-4 h-4 text-emerald-500"></i>
+        <span id="badge2">No Data Collection</span>
+      </div>
+      <div class="flex items-center gap-2 px-4 py-2 bg-white border border-zinc-200 rounded-xl">
+        <i data-lucide="zap" class="w-4 h-4 text-amber-500"></i>
+        <span id="badge3">Always Free & Fast</span>
+      </div>
+      <div class="flex items-center gap-2 px-4 py-2 bg-white border border-zinc-200 rounded-xl">
+        <i data-lucide="lock" class="w-4 h-4 text-indigo-500"></i>
+        <span id="badge4">GDPR Compliant</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-6xl w-full mx-auto px-4 sm:px-8 flex-grow mb-12">
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <aside class="hidden lg:flex h-96 bg-zinc-100 border border-zinc-200 rounded-2xl items-center justify-center text-xs text-zinc-400 uppercase">
+        Advertisement
+      </aside>
+
+      <section class="lg:col-span-2">
+        <div id="errorContainer" class="hidden mb-6 p-4 bg-red-50 border border-red-200 rounded-xl card-animate">
+          <div class="flex items-start gap-3">
+            <i data-lucide="alert-circle" class="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5"></i>
+            <div class="flex-1">
+              <h4 class="font-semibold text-red-900 text-sm" id="errorTitle">Error</h4>
+              <p class="text-red-700 text-sm mt-1" id="errorMessage"></p>
+            </div>
+            <button id="closeErrorBtn" class="text-red-400 hover:text-red-600 ml-auto flex-shrink-0" type="button" aria-label="Close error">
+              <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+
+        <div id="successContainer" class="hidden mb-6 p-4 bg-emerald-50 border border-emerald-200 rounded-xl card-animate">
+          <div class="flex items-start gap-3">
+            <i data-lucide="check-circle" class="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5"></i>
+            <div class="flex-1">
+              <h4 class="font-semibold text-emerald-900 text-sm" id="successTitle">File Ready</h4>
+              <p class="text-emerald-700 text-sm mt-1" id="successMessage">Your file was loaded successfully.</p>
+            </div>
+          </div>
+        </div>
+
+        <div id="dropzone" class="card-animate bg-white border-2 border-dashed border-zinc-300 rounded-2xl p-8 text-center transition-all duration-300 dropzone mb-6 cursor-pointer hover:border-blue-500 hover:bg-blue-50/30">
+          <div class="mb-4">
+            <div class="w-16 h-16 bg-blue-500/10 rounded-2xl flex items-center justify-center mx-auto mb-4 icon-glow">
+              <i data-lucide="file-up" class="w-8 h-8 text-blue-600"></i>
+            </div>
+          </div>
+
+          <h3 id="dropzoneTitle" class="text-lg font-bold text-zinc-900 mb-2">
+            Drop your file here
+          </h3>
+
+          <p id="dropzoneDesc" class="text-sm text-zinc-600 mb-4">
+            or click to browse Excel (.xlsx, .xls) and CSV files
+          </p>
+
+          <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" class="hidden" />
+
+          <button id="browseBtn" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg text-sm transition" type="button">
+            <i data-lucide="folder-open" class="w-4 h-4 inline mr-2"></i>
+            <span id="browseText">Browse Files</span>
+          </button>
+
+          <p class="text-xs text-zinc-400 mt-4" id="supportedFormats">
+            Supported: .xlsx, .xls, .csv (Max 10MB)
+          </p>
+        </div>
+
+        <div class="bg-white border border-zinc-200 rounded-2xl p-6 mb-6">
+          <h3 class="text-sm font-bold mb-4 flex items-center gap-2">
+            <i data-lucide="settings" class="w-4 h-4 text-blue-600"></i>
+            <span id="optionsTitle">Processing Options</span>
+          </h3>
+
+          <div class="space-y-3">
+            <label class="flex items-center gap-3 p-3 border border-zinc-200 rounded-lg hover:bg-zinc-50 cursor-pointer transition">
+              <input type="checkbox" id="removeEmpty" class="w-4 h-4 text-blue-600 rounded" checked />
+              <div>
+                <span id="opt1Title" class="font-medium text-sm text-zinc-900">Remove Empty Rows</span>
+                <p id="opt1Desc" class="text-xs text-zinc-500">Delete rows with no data</p>
+              </div>
+            </label>
+
+            <label class="flex items-center gap-3 p-3 border border-zinc-200 rounded-lg hover:bg-zinc-50 cursor-pointer transition">
+              <input type="checkbox" id="removeDuplicates" class="w-4 h-4 text-blue-600 rounded" checked />
+              <div>
+                <span id="opt2Title" class="font-medium text-sm text-zinc-900">Remove Duplicates</span>
+                <p id="opt2Desc" class="text-xs text-zinc-500">Delete duplicate rows</p>
+              </div>
+            </label>
+
+            <label class="flex items-center gap-3 p-3 border border-zinc-200 rounded-lg hover:bg-zinc-50 cursor-pointer transition">
+              <input type="checkbox" id="trimWhitespace" class="w-4 h-4 text-blue-600 rounded" checked />
+              <div>
+                <span id="opt3Title" class="font-medium text-sm text-zinc-900">Trim Whitespace</span>
+                <p id="opt3Desc" class="text-xs text-zinc-500">Remove extra spaces from cells</p>
+              </div>
+            </label>
+
+            <label class="flex items-center gap-3 p-3 border border-zinc-200 rounded-lg hover:bg-zinc-50 cursor-pointer transition">
+              <input type="checkbox" id="removeHeader" class="w-4 h-4 text-blue-600 rounded" />
+              <div>
+                <span id="opt4Title" class="font-medium text-sm text-zinc-900">Remove Header Row</span>
+                <p id="opt4Desc" class="text-xs text-zinc-500">Delete first row</p>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <div id="fileSizeWarning" class="hidden mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-3 card-animate">
+          <i data-lucide="alert-triangle" class="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5"></i>
+          <div>
+            <p class="text-amber-800 text-sm font-medium" id="fileSizeWarningText">
+              Large file detected. Processing may take a moment, please wait...
+            </p>
+          </div>
+        </div>
+
+        <button id="processBtn" class="w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold rounded-xl transition flex items-center justify-center gap-2 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed mb-6" disabled type="button">
+          <i data-lucide="zap" class="w-5 h-5"></i>
+          <span id="processText">Process File</span>
+        </button>
+
+        <div id="progressContainer" class="hidden mb-6">
+          <div class="flex items-center justify-between mb-2">
+            <span id="progressLabel" class="text-sm font-medium text-zinc-700">Processing...</span>
+            <span id="progressPercent" class="text-sm font-medium text-blue-600">0%</span>
+          </div>
+          <div class="w-full bg-zinc-200 rounded-full h-2 overflow-hidden">
+            <div id="progressBar" class="bg-gradient-to-r from-blue-500 to-indigo-500 h-full rounded-full" style="width: 0%; transition: width 0.3s ease;"></div>
+          </div>
+        </div>
+
+        <div id="resultsContainer" class="hidden bg-white border border-zinc-200 rounded-2xl p-6 card-animate">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-sm font-bold flex items-center gap-2">
+              <i data-lucide="check-circle" class="w-4 h-4 text-emerald-500"></i>
+              <span id="resultsTitle">Processing Complete</span>
+            </h3>
+            <div class="text-xs text-zinc-500">
+              <span id="rowsRemoved">0</span>
+              <span id="rowsRemovedLabel">rows removed</span>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto mb-4 max-h-64 overflow-y-auto border border-zinc-200 rounded-lg">
+            <table class="w-full text-left" id="previewTable">
+              <thead class="bg-zinc-100 sticky top-0">
+                <tr id="previewHeader"></tr>
+              </thead>
+              <tbody id="previewBody"></tbody>
+            </table>
+          </div>
+
+          <div class="flex flex-col sm:flex-row gap-3">
+            <button id="downloadXlsx" class="flex-1 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg text-sm transition flex items-center justify-center gap-2" type="button">
+              <i data-lucide="download" class="w-4 h-4"></i>
+              <span id="downloadXlsxText">Download XLSX</span>
+            </button>
+
+            <button id="downloadCsv" class="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg text-sm transition flex items-center justify-center gap-2" type="button">
+              <i data-lucide="download" class="w-4 h-4"></i>
+              <span id="downloadCsvText">Download CSV</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <aside class="hidden lg:flex h-96 bg-zinc-100 border border-zinc-200 rounded-2xl items-center justify-center text-xs text-zinc-400 uppercase">
+        Advertisement
+      </aside>
+    </div>
+  </main>
+
+  <footer class="mt-auto border-t border-zinc-200 py-8 px-4 sm:px-8 text-center text-sm text-zinc-400 bg-white/40 backdrop-blur-sm flex-shrink-0">
+    <p id="footerText">
+      © 2026 Pratix.io. All tools run client-side securely. No data is collected or stored.
+    </p>
+
+    <div class="flex justify-center gap-6 mt-4 text-xs">
+      <a href="https://pratix.io" class="hover:text-zinc-600 transition">Pratix.io</a>
+      <a href="#" class="hover:text-zinc-600 transition">Privacy Policy</a>
+      <a href="#" class="hover:text-zinc-600 transition">Contact</a>
+    </div>
+  </footer>
+
+  <script>
+    const TRANSLATIONS = {
+      en: {
+        badge1: "100% Client-Side Processing",
+        badge2: "No Data Collection",
+        badge3: "Always Free & Fast",
+        badge4: "GDPR Compliant",
+        heroTitle: "Excel Data Cleaner",
+        heroDesc: "Remove empty rows, delete duplicates, trim whitespace, and clean your spreadsheets instantly.",
+        dropzoneTitle: "Drop your file here",
+        dropzoneDesc: "or click to browse Excel (.xlsx, .xls) and CSV files",
+        browseText: "Browse Files",
+        supportedFormats: "Supported: .xlsx, .xls, .csv (Max 10MB)",
+        optionsTitle: "Processing Options",
+        opt1Title: "Remove Empty Rows",
+        opt1Desc: "Delete rows with no data",
+        opt2Title: "Remove Duplicates",
+        opt2Desc: "Delete duplicate rows",
+        opt3Title: "Trim Whitespace",
+        opt3Desc: "Remove extra spaces from cells",
+        opt4Title: "Remove Header Row",
+        opt4Desc: "Delete first row",
+        processText: "Process File",
+        progressLabel: "Processing...",
+        resultsTitle: "Processing Complete",
+        rowsRemovedLabel: "rows removed",
+        downloadXlsxText: "Download XLSX",
+        downloadCsvText: "Download CSV",
+        footerText: "© 2026 Pratix.io. All tools run client-side securely. No data is collected or stored.",
+        errorTitle: "Error",
+        successTitle: "File Ready",
+        successMessage: "Your file was loaded successfully.",
+        errorFileSize: "File size exceeds 10MB limit. Please upload a smaller file.",
+        errorFileType: "Invalid file type. Please upload Excel (.xlsx, .xls) or CSV files.",
+        errorProcessing: "An error occurred while processing your file. Please try again.",
+        errorNoData: "No data found in the file. Please check your file and try again.",
+        errorLibrary: "Required library could not be loaded. Please check your internet connection.",
+        errorDownload: "An error occurred while downloading the file.",
+        noDataRemaining: "No data remaining after processing.",
+        processingText: "Processing..."
+      },
+      tr: {
+        badge1: "%100 İstemci Tarafı İşleme",
+        badge2: "Veri Toplama Yok",
+        badge3: "Her Zaman Ücretsiz ve Hızlı",
+        badge4: "GDPR Uyumlu",
+        heroTitle: "Excel Veri Temizleyici",
+        heroDesc: "Boş satırları kaldırın, yinelenenleri silin, boşlukları kırpın ve elektronik tablolarınızı anında temizleyin.",
+        dropzoneTitle: "Dosyanızı buraya bırakın",
+        dropzoneDesc: "veya Excel (.xlsx, .xls) ve CSV dosyalarına göz atmak için tıklayın",
+        browseText: "Dosyalara Göz At",
+        supportedFormats: "Desteklenen: .xlsx, .xls, .csv (Maks 10MB)",
+        optionsTitle: "İşlem Seçenekleri",
+        opt1Title: "Boş Satırları Kaldır",
+        opt1Desc: "Veri içermeyen satırları sil",
+        opt2Title: "Yinelenenleri Kaldır",
+        opt2Desc: "Yinelenen satırları sil",
+        opt3Title: "Boşlukları Kırp",
+        opt3Desc: "Hücrelerden fazla boşlukları kaldır",
+        opt4Title: "Başlık Satırını Kaldır",
+        opt4Desc: "İlk satırı sil",
+        processText: "Dosyayı İşle",
+        progressLabel: "İşleniyor...",
+        resultsTitle: "İşlem Tamamlandı",
+        rowsRemovedLabel: "satır kaldırıldı",
+        downloadXlsxText: "XLSX İndir",
+        downloadCsvText: "CSV İndir",
+        footerText: "© 2026 Pratix.io. Tüm araçlar istemci tarafında güvenle çalışır. Veri toplanmaz veya saklanmaz.",
+        errorTitle: "Hata",
+        successTitle: "Dosya Hazır",
+        successMessage: "Dosyanız başarıyla yüklendi.",
+        errorFileSize: "Dosya boyutu 10MB sınırını aşıyor. Lütfen daha küçük bir dosya yükleyin.",
+        errorFileType: "Geçersiz dosya türü. Lütfen Excel (.xlsx, .xls) veya CSV dosyası yükleyin.",
+        errorProcessing: "Dosyanız işlenirken bir hata oluştu. Lütfen tekrar deneyin.",
+        errorNoData: "Dosyada veri bulunamadı. Lütfen dosyanızı kontrol edip tekrar deneyin.",
+        errorLibrary: "Gerekli kütüphane yüklenemedi. Lütfen internet bağlantınızı kontrol edin.",
+        errorDownload: "Dosya indirilirken hata oluştu.",
+        noDataRemaining: "İşlemden sonra veri kalmadı.",
+        processingText: "Processing..."
+      },
+      de: {
+        badge1: "100% Client-seitige Verarbeitung",
+        badge2: "Keine Datenerfassung",
+        badge3: "Immer kostenlos & schnell",
+        badge4: "GDPR konform",
+        heroTitle: "Excel Datenreiniger",
+        heroDesc: "Entfernen Sie leere Zeilen, löschen Sie Duplikate, schneiden Sie Leerzeichen ab und bereinigen Sie Ihre Tabellen sofort.",
+        dropzoneTitle: "Legen Sie Ihre Datei hier ab",
+        dropzoneDesc: "oder klicken Sie, um Excel (.xlsx, .xls) und CSV-Dateien zu durchsuchen",
+        browseText: "Dateien durchsuchen",
+        supportedFormats: "Unterstützt: .xlsx, .xls, .csv (Max 10MB)",
+        optionsTitle: "Verarbeitungsoptionen",
+        opt1Title: "Leere Zeilen entfernen",
+        opt1Desc: "Zeilen ohne Daten löschen",
+        opt2Title: "Duplikate entfernen",
+        opt2Desc: "Doppelte Zeilen löschen",
+        opt3Title: "Leerzeichen trimmen",
+        opt3Desc: "Entfernen Sie zusätzliche Leerzeichen aus Zellen",
+        opt4Title: "Kopfzeile entfernen",
+        opt4Desc: "Erste Zeile löschen",
+        processText: "Datei verarbeiten",
+        progressLabel: "Wird verarbeitet...",
+        resultsTitle: "Verarbeitung abgeschlossen",
+        rowsRemovedLabel: "Zeilen entfernt",
+        downloadXlsxText: "XLSX herunterladen",
+        downloadCsvText: "CSV herunterladen",
+        footerText: "© 2026 Pratix.io. Alle Tools werden sicher auf der Clientseite ausgeführt.",
+        errorTitle: "Fehler",
+        successTitle: "Datei bereit",
+        successMessage: "Ihre Datei wurde erfolgreich geladen.",
+        errorFileSize: "Dateigröße überschreitet das Limit von 10 MB.",
+        errorFileType: "Ungültiger Dateityp.",
+        errorProcessing: "Bei der Verarbeitung Ihrer Datei ist ein Fehler aufgetreten.",
+        errorNoData: "Keine Daten in der Datei gefunden.",
+        errorLibrary: "Die erforderliche Bibliothek konnte nicht geladen werden.",
+        errorDownload: "Beim Herunterladen der Datei ist ein Fehler aufgetreten.",
+        noDataRemaining: "Nach der Verarbeitung sind keine Daten mehr vorhanden.",
+        processingText: "Processing..."
+      },
+      fr: {
+        badge1: "Traitement 100% côté client",
+        badge2: "Pas de collecte de données",
+        badge3: "Toujours gratuit et rapide",
+        badge4: "Conforme RGPD",
+        heroTitle: "Nettoyeur de données Excel",
+        heroDesc: "Supprimez les lignes vides, supprimez les doublons, supprimez les espaces inutiles et nettoyez vos feuilles de calcul instantanément.",
+        dropzoneTitle: "Déposez votre fichier ici",
+        dropzoneDesc: "ou cliquez pour parcourir les fichiers Excel (.xlsx, .xls) et CSV",
+        browseText: "Parcourir les fichiers",
+        supportedFormats: "Pris en charge : .xlsx, .xls, .csv (Max 10 Mo)",
+        optionsTitle: "Options de traitement",
+        opt1Title: "Supprimer les lignes vides",
+        opt1Desc: "Supprimer les lignes sans données",
+        opt2Title: "Supprimer les doublons",
+        opt2Desc: "Supprimer les lignes en double",
+        opt3Title: "Supprimer les espaces",
+        opt3Desc: "Supprimer les espaces supplémentaires des cellules",
+        opt4Title: "Supprimer la ligne d'en-tête",
+        opt4Desc: "Supprimer la première ligne",
+        processText: "Traiter le fichier",
+        progressLabel: "Traitement en cours...",
+        resultsTitle: "Traitement terminé",
+        rowsRemovedLabel: "lignes supprimées",
+        downloadXlsxText: "Télécharger XLSX",
+        downloadCsvText: "Télécharger CSV",
+        footerText: "© 2026 Pratix.io. Tous les outils s'exécutent de manière sécurisée côté client.",
+        errorTitle: "Erreur",
+        successTitle: "Fichier prêt",
+        successMessage: "Votre fichier a été chargé avec succès.",
+        errorFileSize: "La taille du fichier dépasse la limite de 10 Mo.",
+        errorFileType: "Type de fichier invalide.",
+        errorProcessing: "Une erreur s'est produite lors du traitement de votre fichier.",
+        errorNoData: "Aucune donnée trouvée dans le fichier.",
+        errorLibrary: "La bibliothèque requise n'a pas pu être chargée.",
+        errorDownload: "Une erreur s'est produite lors du téléchargement du fichier.",
+        noDataRemaining: "Aucune donnée restante après le traitement.",
+        processingText: "Processing..."
+      },
+      es: {
+        badge1: "Procesamiento 100% del cliente",
+        badge2: "Sin recopilación de datos",
+        badge3: "Siempre gratis y rápido",
+        badge4: "Conforme con GDPR",
+        heroTitle: "Limpiador de datos de Excel",
+        heroDesc: "Elimine filas vacías, elimine duplicados, recorte espacios en blanco y limpie sus hojas de cálculo al instante.",
+        dropzoneTitle: "Suelte su archivo aquí",
+        dropzoneDesc: "o haga clic para examinar archivos de Excel (.xlsx, .xls) y CSV",
+        browseText: "Examinar archivos",
+        supportedFormats: "Compatible: .xlsx, .xls, .csv (Máx 10 MB)",
+        optionsTitle: "Opciones de procesamiento",
+        opt1Title: "Eliminar filas vacías",
+        opt1Desc: "Eliminar filas sin datos",
+        opt2Title: "Eliminar duplicados",
+        opt2Desc: "Eliminar filas duplicadas",
+        opt3Title: "Recortar espacios",
+        opt3Desc: "Eliminar espacios adicionales de las celdas",
+        opt4Title: "Eliminar fila de encabezado",
+        opt4Desc: "Eliminar primera fila",
+        processText: "Procesar archivo",
+        progressLabel: "Procesando...",
+        resultsTitle: "Procesamiento completado",
+        rowsRemovedLabel: "filas eliminadas",
+        downloadXlsxText: "Descargar XLSX",
+        downloadCsvText: "Descargar CSV",
+        footerText: "© 2026 Pratix.io. Todas las herramientas se ejecutan de forma segura en el cliente.",
+        errorTitle: "Error",
+        successTitle: "Archivo listo",
+        successMessage: "Su archivo se cargó correctamente.",
+        errorFileSize: "El tamaño del archivo excede el límite de 10 MB.",
+        errorFileType: "Tipo de archivo no válido.",
+        errorProcessing: "Se produjo un error al procesar su archivo.",
+        errorNoData: "No se encontraron datos en el archivo.",
+        errorLibrary: "No se pudo cargar la biblioteca requerida.",
+        errorDownload: "Se produjo un error al descargar el archivo.",
+        noDataRemaining: "No quedan datos después del procesamiento.",
+        processingText: "Processing..."
+      },
+      it: {
+        badge1: "Elaborazione 100% lato client",
+        badge2: "Nessuna raccolta dati",
+        badge3: "Sempre gratuito e veloce",
+        badge4: "Conforme a GDPR",
+        heroTitle: "Pulitore di dati Excel",
+        heroDesc: "Rimuovi righe vuote, elimina duplicati, taglia spazi bianchi e pulisci i tuoi fogli di calcolo istantaneamente.",
+        dropzoneTitle: "Rilascia il tuo file qui",
+        dropzoneDesc: "o fai clic per sfogliare file Excel (.xlsx, .xls) e CSV",
+        browseText: "Sfoglia file",
+        supportedFormats: "Supportato: .xlsx, .xls, .csv (Max 10 MB)",
+        optionsTitle: "Opzioni di elaborazione",
+        opt1Title: "Rimuovi righe vuote",
+        opt1Desc: "Elimina righe senza dati",
+        opt2Title: "Rimuovi duplicati",
+        opt2Desc: "Elimina righe duplicate",
+        opt3Title: "Taglia spazi",
+        opt3Desc: "Rimuovi spazi extra dalle celle",
+        opt4Title: "Rimuovi riga di intestazione",
+        opt4Desc: "Elimina prima riga",
+        processText: "Elabora file",
+        progressLabel: "Elaborazione in corso...",
+        resultsTitle: "Elaborazione completata",
+        rowsRemovedLabel: "righe rimosse",
+        downloadXlsxText: "Scarica XLSX",
+        downloadCsvText: "Scarica CSV",
+        footerText: "© 2026 Pratix.io. Tutti gli strumenti vengono eseguiti in modo sicuro lato client.",
+        errorTitle: "Errore",
+        successTitle: "File pronto",
+        successMessage: "Il file è stato caricato correttamente.",
+        errorFileSize: "La dimensione del file supera il limite di 10 MB.",
+        errorFileType: "Tipo di file non valido.",
+        errorProcessing: "Si è verificato un errore durante l'elaborazione del file.",
+        errorNoData: "Nessun dato trovato nel file.",
+        errorLibrary: "Impossibile caricare la libreria richiesta.",
+        errorDownload: "Si è verificato un errore durante il download del file.",
+        noDataRemaining: "Nessun dato rimanente dopo l'elaborazione.",
+        processingText: "Processing..."
+      },
+      nl: {
+        badge1: "100% verwerking aan clientzijde",
+        badge2: "Geen gegevensverzameling",
+        badge3: "Altijd gratis en snel",
+        badge4: "GDPR-compliant",
+        heroTitle: "Excel-gegevenscleaner",
+        heroDesc: "Verwijder lege rijen, verwijder duplicaten, verwijder witruimte en maak uw spreadsheets direct schoon.",
+        dropzoneTitle: "Sleep uw bestand hier",
+        dropzoneDesc: "of klik om Excel (.xlsx, .xls) en CSV-bestanden te bladeren",
+        browseText: "Bestanden bladeren",
+        supportedFormats: "Ondersteund: .xlsx, .xls, .csv (Max 10 MB)",
+        optionsTitle: "Verwerkingsopties",
+        opt1Title: "Lege rijen verwijderen",
+        opt1Desc: "Rijen zonder gegevens verwijderen",
+        opt2Title: "Duplicaten verwijderen",
+        opt2Desc: "Dubbele rijen verwijderen",
+        opt3Title: "Witruimte bijsnijden",
+        opt3Desc: "Verwijder extra spaties uit cellen",
+        opt4Title: "Koptekstrij verwijderen",
+        opt4Desc: "Eerste rij verwijderen",
+        processText: "Bestand verwerken",
+        progressLabel: "Verwerking...",
+        resultsTitle: "Verwerking voltooid",
+        rowsRemovedLabel: "rijen verwijderd",
+        downloadXlsxText: "XLSX downloaden",
+        downloadCsvText: "CSV downloaden",
+        footerText: "© 2026 Pratix.io. Alle tools draaien veilig aan de clientzijde.",
+        errorTitle: "Fout",
+        successTitle: "Bestand gereed",
+        successMessage: "Uw bestand is succesvol geladen.",
+        errorFileSize: "Bestandsgrootte overschrijdt limiet van 10 MB.",
+        errorFileType: "Ongeldig bestandstype.",
+        errorProcessing: "Er is een fout opgetreden bij het verwerken van uw bestand.",
+        errorNoData: "Geen gegevens gevonden in het bestand.",
+        errorLibrary: "De vereiste bibliotheek kon niet worden geladen.",
+        errorDownload: "Er is een fout opgetreden bij het downloaden van het bestand.",
+        noDataRemaining: "Geen gegevens over na verwerking.",
+        processingText: "Processing..."
+      },
+      sv: {
+        badge1: "100% klientbearbetning",
+        badge2: "Ingen datainsamling",
+        badge3: "Alltid gratis och snabb",
+        badge4: "GDPR-kompatibel",
+        heroTitle: "Excel-datarensare",
+        heroDesc: "Ta bort tomma rader, ta bort dubbletter, trimma blanksteg och rensa dina kalkylblad direkt.",
+        dropzoneTitle: "Släpp din fil här",
+        dropzoneDesc: "eller klicka för att bläddra i Excel (.xlsx, .xls) och CSV-filer",
+        browseText: "Bläddra i filer",
+        supportedFormats: "Stöds: .xlsx, .xls, .csv (Max 10 MB)",
+        optionsTitle: "Bearbetningsalternativ",
+        opt1Title: "Ta bort tomma rader",
+        opt1Desc: "Ta bort rader utan data",
+        opt2Title: "Ta bort dubbletter",
+        opt2Desc: "Ta bort duplicerade rader",
+        opt3Title: "Trimma blanksteg",
+        opt3Desc: "Ta bort extra mellanslag från celler",
+        opt4Title: "Ta bort rubrikrad",
+        opt4Desc: "Ta bort första raden",
+        processText: "Bearbeta fil",
+        progressLabel: "Bearbetar...",
+        resultsTitle: "Bearbetningen är klar",
+        rowsRemovedLabel: "rader borttagna",
+        downloadXlsxText: "Ladda ner XLSX",
+        downloadCsvText: "Ladda ner CSV",
+        footerText: "© 2026 Pratix.io. Alla verktyg körs säkert på klientsidan.",
+        errorTitle: "Fel",
+        successTitle: "Filen är klar",
+        successMessage: "Din fil har laddats upp.",
+        errorFileSize: "Filstorlek överskrider gränsen på 10 MB.",
+        errorFileType: "Ogiltig filtyp.",
+        errorProcessing: "Ett fel uppstod vid bearbetning av filen.",
+        errorNoData: "Inga data hittades i filen.",
+        errorLibrary: "Det gick inte att ladda det nödvändiga biblioteket.",
+        errorDownload: "Ett fel uppstod vid nedladdning av filen.",
+        noDataRemaining: "Inga data kvar efter bearbetning.",
+        processingText: "Processing..."
+      },
+      da: {
+        badge1: "100% behandling på klientsiden",
+        badge2: "Ingen dataindsamling",
+        badge3: "Altid gratis og hurtig",
+        badge4: "GDPR-kompatibel",
+        heroTitle: "Excel-datarenser",
+        heroDesc: "Fjern tomme rækker, slet duplikater, trim mellemrum og rens dine regneark øjeblikkeligt.",
+        dropzoneTitle: "Slip din fil her",
+        dropzoneDesc: "eller klik for at gennemse Excel (.xlsx, .xls) og CSV-filer",
+        browseText: "Gennemse filer",
+        supportedFormats: "Understøttet: .xlsx, .xls, .csv (Maks 10 MB)",
+        optionsTitle: "Behandlingsmuligheder",
+        opt1Title: "Fjern tomme rækker",
+        opt1Desc: "Slet rækker uden data",
+        opt2Title: "Fjern duplikater",
+        opt2Desc: "Slet duplikerede rækker",
+        opt3Title: "Trim mellemrum",
+        opt3Desc: "Fjern ekstra mellemrum fra celler",
+        opt4Title: "Fjern headerrække",
+        opt4Desc: "Slet første række",
+        processText: "Behandl fil",
+        progressLabel: "Behandler...",
+        resultsTitle: "Behandlingen er fuldført",
+        rowsRemovedLabel: "rækker slettet",
+        downloadXlsxText: "Download XLSX",
+        downloadCsvText: "Download CSV",
+        footerText: "© 2026 Pratix.io. Alle værktøjer køres sikkert på klientsiden.",
+        errorTitle: "Fejl",
+        successTitle: "Fil klar",
+        successMessage: "Din fil blev indlæst.",
+        errorFileSize: "Filstørrelse overstiger grænsen på 10 MB.",
+        errorFileType: "Ugyldig filtype.",
+        errorProcessing: "Der opstod en fejl under behandling af filen.",
+        errorNoData: "Ingen data fundet i filen.",
+        errorLibrary: "Det nødvendige bibliotek kunne ikke indlæses.",
+        errorDownload: "Der opstod en fejl under download af filen.",
+        noDataRemaining: "Ingen data tilbage efter behandling.",
+        processingText: "Processing..."
+      },
+      no: {
+        badge1: "100% klientsidebehandling",
+        badge2: "Ingen datainnsamling",
+        badge3: "Alltid gratis og rask",
+        badge4: "GDPR-kompatibel",
+        heroTitle: "Excel-datarenser",
+        heroDesc: "Fjern tomme rader, slett duplikater, trim mellomrom og rengjør regnearkene dine øyeblikkelig.",
+        dropzoneTitle: "Slipp filen din her",
+        dropzoneDesc: "eller klikk for å bla gjennom Excel (.xlsx, .xls) og CSV-filer",
+        browseText: "Bla gjennom filer",
+        supportedFormats: "Støttet: .xlsx, .xls, .csv (Maks 10 MB)",
+        optionsTitle: "Behandlingsalternativer",
+        opt1Title: "Fjern tomme rader",
+        opt1Desc: "Slett rader uten data",
+        opt2Title: "Fjern duplikater",
+        opt2Desc: "Slett dupliserte rader",
+        opt3Title: "Trim mellomrom",
+        opt3Desc: "Fjern ekstra mellomrom fra celler",
+        opt4Title: "Fjern topptekstrad",
+        opt4Desc: "Slett første rad",
+        processText: "Behandle fil",
+        progressLabel: "Behandler...",
+        resultsTitle: "Behandlingen er fullført",
+        rowsRemovedLabel: "rader slettet",
+        downloadXlsxText: "Last ned XLSX",
+        downloadCsvText: "Last ned CSV",
+        footerText: "© 2026 Pratix.io. Alle verktøy kjøres sikkert på klientsiden.",
+        errorTitle: "Feil",
+        successTitle: "Fil klar",
+        successMessage: "Filen ble lastet inn.",
+        errorFileSize: "Filstørrelse overstiger grensen på 10 MB.",
+        errorFileType: "Ugyldig filtype.",
+        errorProcessing: "En feil oppstod under behandling av filen.",
+        errorNoData: "Ingen data funnet i filen.",
+        errorLibrary: "Det nødvendige biblioteket kunne ikke lastes.",
+        errorDownload: "Det oppstod en feil under nedlasting av filen.",
+        noDataRemaining: "Ingen data igjen etter behandling.",
+        processingText: "Processing..."
+      },
+      fi: {
+        badge1: "100% asiakaspuolen käsittely",
+        badge2: "Ei tiedonkeruuta",
+        badge3: "Aina ilmainen ja nopea",
+        badge4: "GDPR-yhteensopiva",
+        heroTitle: "Excel-tietojen puhdistusaine",
+        heroDesc: "Poista tyhjät rivit, poista kaksoiskappaleita, leikkaa välilyönnit ja puhdista laskentataulukot välittömästi.",
+        dropzoneTitle: "Pudota tiedostosi tähän",
+        dropzoneDesc: "tai napsauta selataksesi Excel (.xlsx, .xls) ja CSV-tiedostoja",
+        browseText: "Selaa tiedostoja",
+        supportedFormats: "Tuettu: .xlsx, .xls, .csv (Max 10 Mt)",
+        optionsTitle: "Käsittelyvalinnat",
+        opt1Title: "Poista tyhjät rivit",
+        opt1Desc: "Poista rivit ilman tietoja",
+        opt2Title: "Poista kaksoiskappaleita",
+        opt2Desc: "Poista kaksoisrivit",
+        opt3Title: "Leikkaa välilyönnit",
+        opt3Desc: "Poista ylimääräiset välilyönnit soluista",
+        opt4Title: "Poista otsikkorivi",
+        opt4Desc: "Poista ensimmäinen rivi",
+        processText: "Käsittele tiedostoa",
+        progressLabel: "Käsitellään...",
+        resultsTitle: "Käsittely valmis",
+        rowsRemovedLabel: "rivit poistettu",
+        downloadXlsxText: "Lataa XLSX",
+        downloadCsvText: "Lataa CSV",
+        footerText: "© 2026 Pratix.io. Kaikki työkalut toimivat turvallisesti asiakaspuolella.",
+        errorTitle: "Virhe",
+        successTitle: "Tiedosto valmis",
+        successMessage: "Tiedosto ladattiin onnistuneesti.",
+        errorFileSize: "Tiedoston koko ylittää 10 MB:n rajan.",
+        errorFileType: "Virheellinen tiedostotyyppi.",
+        errorProcessing: "Virhe tapahtui tiedoston käsittelyssä.",
+        errorNoData: "Tiedostosta ei löytynyt tietoja.",
+        errorLibrary: "Tarvittavaa kirjastoa ei voitu ladata.",
+        errorDownload: "Tiedostoa ladattaessa tapahtui virhe.",
+        noDataRemaining: "Käsittelyn jälkeen ei jäänyt tietoja.",
+        processingText: "Processing..."
+      },
+      zh: {
+        badge1: "100% 客户端纯本地处理",
+        badge2: "不收集任何用户数据",
+        badge3: "永远免费与极速体验",
+        badge4: "完全符合GDPR",
+        heroTitle: "Excel 数据清洁工具",
+        heroDesc: "删除空行、删除重复项、修剪空格并立即清理您的电子表格。",
+        dropzoneTitle: "在此处放置您的文件",
+        dropzoneDesc: "或点击浏览 Excel (.xlsx, .xls) 和 CSV 文件",
+        browseText: "浏览文件",
+        supportedFormats: "支持：.xlsx, .xls, .csv (最大 10MB)",
+        optionsTitle: "处理选项",
+        opt1Title: "删除空行",
+        opt1Desc: "删除没有数据的行",
+        opt2Title: "删除重复项",
+        opt2Desc: "删除重复的行",
+        opt3Title: "修剪空格",
+        opt3Desc: "从单元格中删除多余的空格",
+        opt4Title: "删除标题行",
+        opt4Desc: "删除第一行",
+        processText: "处理文件",
+        progressLabel: "处理中...",
+        resultsTitle: "处理完成",
+        rowsRemovedLabel: "行已删除",
+        downloadXlsxText: "下载 XLSX",
+        downloadCsvText: "下载 CSV",
+        footerText: "© 2026 Pratix.io。所有工具均在客户端安全运行。",
+        errorTitle: "错误",
+        successTitle: "文件已准备好",
+        successMessage: "您的文件已成功加载。",
+        errorFileSize: "文件大小超过 10MB 限制。",
+        errorFileType: "无效的文件类型。",
+        errorProcessing: "处理文件时出错。",
+        errorNoData: "文件中未找到数据。",
+        errorLibrary: "所需库无法加载。",
+        errorDownload: "下载文件时出错。",
+        noDataRemaining: "处理后没有剩余数据。",
+        processingText: "Processing..."
+      }
+    };
+
+    let currentLanguage = localStorage.getItem("language") || "en";
+    let uploadedData = [];
+    let processedData = [];
+
+    const MAX_FILE_SIZE = 10 * 1024 * 1024;
+    const LARGE_FILE_THRESHOLD = 5 * 1024 * 1024;
+
+    function getTranslation(key) {
+      const langPack = TRANSLATIONS[currentLanguage] || TRANSLATIONS.en;
+      return langPack[key] || TRANSLATIONS.en[key] || key;
+    }
+
+    function initializeApp() {
+      updateLanguage(currentLanguage);
+      setupEventListeners();
+      refreshIcons();
+    }
+
+    function refreshIcons() {
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function updateLanguage(lang) {
+      currentLanguage = lang;
+      localStorage.setItem("language", lang);
+
+      const displayMap = {
+        en: "EN",
+        tr: "TR",
+        de: "DE",
+        fr: "FR",
+        es: "ES",
+        it: "IT",
+        nl: "NL",
+        sv: "SV",
+        da: "DA",
+        no: "NO",
+        fi: "FI",
+        zh: "中文"
+      };
+
+      document.getElementById("langDisplay").textContent = displayMap[lang] || "EN";
+      updateUIText();
+      refreshIcons();
+    }
+
+    function updateUIText() {
+      const t = TRANSLATIONS[currentLanguage] || TRANSLATIONS.en;
+      Object.keys(t).forEach((key) => {
+        const el = document.getElementById(key);
+        if (el) el.textContent = t[key];
+      });
+    }
+
+    function showError(messageKeyOrText, titleKey = "errorTitle") {
+      const errorContainer = document.getElementById("errorContainer");
+      document.getElementById("errorTitle").textContent = getTranslation(titleKey);
+      document.getElementById("errorMessage").textContent = getTranslation(messageKeyOrText) || messageKeyOrText;
+      errorContainer.classList.remove("hidden");
+      document.getElementById("successContainer").classList.add("hidden");
+      refreshIcons();
+    }
+
+    function hideError() {
+      document.getElementById("errorContainer").classList.add("hidden");
+    }
+
+    function showSuccess(messageKey = "successMessage") {
+      document.getElementById("successTitle").textContent = getTranslation("successTitle");
+      document.getElementById("successMessage").textContent = getTranslation(messageKey);
+      document.getElementById("successContainer").classList.remove("hidden");
+      document.getElementById("errorContainer").classList.add("hidden");
+
+      setTimeout(() => {
+        document.getElementById("successContainer").classList.add("hidden");
+      }, 3000);
+
+      refreshIcons();
+    }
+
+    function normalizeCell(cell) {
+      if (cell === null || cell === undefined) return "";
+      return typeof cell === "string" ? cell : String(cell);
+    }
+
+    function isEmptyRow(row) {
+      return !row || row.every((cell) => normalizeCell(cell).trim() === "");
+    }
+
+    function arraysToObjects(rows) {
+      if (!rows || rows.length === 0) return [];
+
+      const maxColumns = rows.reduce((max, row) => Math.max(max, row.length), 0);
+      const headers = [];
+
+      for (let i = 0; i < maxColumns; i++) {
+        const rawHeader = normalizeCell(rows[0]?.[i]).trim();
+        headers.push(rawHeader || `Column ${i + 1}`);
+      }
+
+      return rows.slice(1).map((row) => {
+        const obj = {};
+        headers.forEach((header, index) => {
+          obj[header] = row[index] ?? "";
+        });
+        return obj;
+      });
+    }
+
+    function setLoadingState(isLoading) {
+      const processBtn = document.getElementById("processBtn");
+      const progressContainer = document.getElementById("progressContainer");
+      const progressBar = document.getElementById("progressBar");
+      const progressPercent = document.getElementById("progressPercent");
+
+      if (isLoading) {
+        processBtn.disabled = true;
+        processBtn.innerHTML = `<i data-lucide="loader" class="w-5 h-5 animate-spin"></i><span>${getTranslation("processingText")}</span>`;
+        progressContainer.classList.remove("hidden");
+        progressBar.style.width = "30%";
+        progressPercent.textContent = "30%";
+      } else {
+        processBtn.disabled = uploadedData.length === 0;
+        processBtn.innerHTML = `<i data-lucide="zap" class="w-5 h-5"></i><span id="processText">${getTranslation("processText")}</span>`;
+        progressBar.style.width = "100%";
+        progressPercent.textContent = "100%";
+
+        setTimeout(() => {
+          progressContainer.classList.add("hidden");
+          progressBar.style.width = "0%";
+          progressPercent.textContent = "0%";
+        }, 400);
+      }
+
+      refreshIcons();
+    }
+
+    function handleFileUpload(file) {
+      try {
+        hideError();
+
+        if (!file) return;
+
+        uploadedData = [];
+        processedData = [];
+
+        document.getElementById("resultsContainer").classList.add("hidden");
+        document.getElementById("processBtn").disabled = true;
+
+        if (file.size > MAX_FILE_SIZE) {
+          showError("errorFileSize");
+          return;
+        }
+
+        const validExtensions = [".xlsx", ".xls", ".csv"];
+        const fileName = file.name.toLowerCase();
+
+        if (!validExtensions.some((extension) => fileName.endsWith(extension))) {
+          showError("errorFileType");
+          return;
+        }
+
+        if (file.size > LARGE_FILE_THRESHOLD) {
+          document.getElementById("fileSizeWarning").classList.remove("hidden");
+        } else {
+          document.getElementById("fileSizeWarning").classList.add("hidden");
+        }
+
+        const reader = new FileReader();
+
+        reader.onerror = () => showError("errorProcessing");
+
+        reader.onload = (event) => {
+          try {
+            if (fileName.endsWith(".csv")) {
+              if (typeof Papa === "undefined") {
+                showError("errorLibrary");
+                return;
+              }
+
+              Papa.parse(event.target.result, {
+                skipEmptyLines: false,
+                complete: (results) => {
+                  uploadedData = results.data || [];
+
+                  if (!uploadedData.length || uploadedData.every(isEmptyRow)) {
+                    showError("errorNoData");
+                    return;
+                  }
+
+                  document.getElementById("processBtn").disabled = false;
+                  showSuccess();
+                },
+                error: () => showError("errorProcessing")
+              });
+            } else {
+              if (typeof XLSX === "undefined") {
+                showError("errorLibrary");
+                return;
+              }
+
+              const workbook = XLSX.read(event.target.result, { type: "array" });
+              const firstSheetName = workbook.SheetNames[0];
+
+              if (!firstSheetName) {
+                showError("errorNoData");
+                return;
+              }
+
+              const sheet = workbook.Sheets[firstSheetName];
+
+              uploadedData = XLSX.utils.sheet_to_json(sheet, {
+                header: 1,
+                defval: ""
+              });
+
+              if (!uploadedData.length || uploadedData.every(isEmptyRow)) {
+                showError("errorNoData");
+                return;
+              }
+
+              document.getElementById("processBtn").disabled = false;
+              showSuccess();
+            }
+          } catch (error) {
+            console.error("File parse error:", error);
+            showError("errorProcessing");
+          }
+        };
+
+        if (fileName.endsWith(".csv")) {
+          reader.readAsText(file);
+        } else {
+          reader.readAsArrayBuffer(file);
+        }
+      } catch (error) {
+        console.error("Upload error:", error);
+        showError("errorProcessing");
+      }
+    }
+
+    async function processFile() {
+      setLoadingState(true);
+      hideError();
+
+      try {
+        if (!uploadedData || uploadedData.length === 0) {
+          showError("errorNoData");
+          return;
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, 80));
+
+        let data = JSON.parse(JSON.stringify(uploadedData));
+
+        const report = {
+          originalRows: data.length,
+          headerRowsRemoved: 0,
+          emptyRowsRemoved: 0,
+          duplicateRowsRemoved: 0,
+          totalRowsRemoved: 0,
+          finalRows: 0
+        };
+
+        if (document.getElementById("removeHeader").checked && data.length > 0) {
+          data.shift();
+          report.headerRowsRemoved = 1;
+        }
+
+        if (document.getElementById("trimWhitespace").checked) {
+          data = data.map((row) => {
+            if (!Array.isArray(row)) return [];
+            return row.map((cell) => {
+              if (typeof cell === "string") return cell.trim();
+              if (cell === null || cell === undefined) return "";
+              return cell;
+            });
+          });
+        }
+
+        if (document.getElementById("removeEmpty").checked) {
+          const beforeCount = data.length;
+
+          data = data.filter((row) => {
+            if (!Array.isArray(row)) return false;
+            return !isEmptyRow(row);
+          });
+
+          report.emptyRowsRemoved = beforeCount - data.length;
+        }
+
+        if (document.getElementById("removeDuplicates").checked) {
+          const beforeCount = data.length;
+          const seen = new Set();
+
+          data = data.filter((row) => {
+            const normalizedRow = Array.isArray(row)
+              ? row.map((cell) => normalizeCell(cell).trim())
+              : [];
+
+            while (
+              normalizedRow.length > 0 &&
+              normalizedRow[normalizedRow.length - 1] === ""
+            ) {
+              normalizedRow.pop();
+            }
+
+            const key = JSON.stringify(normalizedRow);
+
+            if (seen.has(key)) return false;
+
+            seen.add(key);
+            return true;
+          });
+
+          report.duplicateRowsRemoved = beforeCount - data.length;
+        }
+
+        report.totalRowsRemoved =
+          report.headerRowsRemoved +
+          report.emptyRowsRemoved +
+          report.duplicateRowsRemoved;
+
+        report.finalRows = data.length;
+
+        if (!data.length) {
+          uploadedData = [];
+          processedData = [];
+          displayResults([], report);
+          return;
+        }
+
+        uploadedData = data;
+        processedData = arraysToObjects(data);
+
+        displayResults(data, report);
+      } catch (error) {
+        console.error("Processing error:", error);
+        showError("errorProcessing");
+      } finally {
+        setLoadingState(false);
+      }
+    }
+
+    function displayResults(dataRows, reportOrRemovedCount) {
+      const resultsContainer = document.getElementById("resultsContainer");
+      const previewHeader = document.getElementById("previewHeader");
+      const previewBody = document.getElementById("previewBody");
+
+      previewHeader.innerHTML = "";
+      previewBody.innerHTML = "";
+
+      const report =
+        typeof reportOrRemovedCount === "object"
+          ? reportOrRemovedCount
+          : {
+              originalRows: uploadedData.length,
+              headerRowsRemoved: 0,
+              emptyRowsRemoved: 0,
+              duplicateRowsRemoved: 0,
+              totalRowsRemoved: Number(reportOrRemovedCount || 0),
+              finalRows: dataRows ? dataRows.length : 0
+            };
+
+      document.getElementById("rowsRemoved").textContent = report.totalRowsRemoved;
+
+      let reportBox = document.getElementById("cleaningReportBox");
+
+      if (!reportBox) {
+        reportBox = document.createElement("div");
+        reportBox.id = "cleaningReportBox";
+        reportBox.className = "mb-4 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs";
+
+        const tableWrapper = document
+          .getElementById("previewTable")
+          .closest(".overflow-x-auto");
+
+        resultsContainer.insertBefore(reportBox, tableWrapper);
+      }
+
+      reportBox.innerHTML = "";
+
+      const reportItems = [
+        {
+          label: getTranslation("rowsRemovedLabel"),
+          value: report.totalRowsRemoved
+        },
+        {
+          label: getTranslation("opt1Title"),
+          value: report.emptyRowsRemoved
+        },
+        {
+          label: getTranslation("opt2Title"),
+          value: report.duplicateRowsRemoved
+        },
+        {
+          label: getTranslation("resultsTitle"),
+          value: report.finalRows
+        }
+      ];
+
+      reportItems.forEach((item) => {
+        const card = document.createElement("div");
+        card.className = "bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-3 text-center";
+
+        const value = document.createElement("div");
+        value.className = "font-bold text-zinc-900 text-base";
+        value.textContent = item.value;
+
+        const label = document.createElement("div");
+        label.className = "text-zinc-500 mt-1 leading-tight";
+        label.textContent = item.label;
+
+        card.appendChild(value);
+        card.appendChild(label);
+        reportBox.appendChild(card);
+      });
+
+      if (!dataRows || dataRows.length === 0) {
+        previewBody.innerHTML = `
+          <tr>
+            <td class="px-4 py-4 text-center text-zinc-500" colspan="1">
+              ${getTranslation("noDataRemaining")}
+            </td>
+          </tr>
+        `;
+
+        resultsContainer.classList.remove("hidden");
+        refreshIcons();
+        return;
+      }
+
+      const maxColumns = dataRows.reduce(
+        (max, row) => Math.max(max, Array.isArray(row) ? row.length : 0),
+        0
+      );
+
+      const firstRow = dataRows[0] || [];
+
+      for (let i = 0; i < maxColumns; i++) {
+        const th = document.createElement("th");
+        th.className = "px-4 py-2 font-semibold text-zinc-900 text-left whitespace-nowrap";
+        th.textContent = normalizeCell(firstRow[i]).trim() || `Column ${i + 1}`;
+        previewHeader.appendChild(th);
+      }
+
+      dataRows.slice(0, 10).forEach((row) => {
+        const tr = document.createElement("tr");
+        tr.className = "border-t border-zinc-200 hover:bg-zinc-50";
+
+        for (let i = 0; i < maxColumns; i++) {
+          const td = document.createElement("td");
+          td.className = "px-4 py-2 text-zinc-700 whitespace-nowrap";
+          td.textContent = row[i] ?? "";
+          tr.appendChild(td);
+        }
+
+        previewBody.appendChild(tr);
+      });
+
+      resultsContainer.classList.remove("hidden");
+      refreshIcons();
+    }
+
+    function downloadAsXLSX() {
+      if (typeof XLSX === "undefined") {
+        showError("errorLibrary");
+        return;
+      }
+
+      try {
+        if (!processedData || processedData.length === 0) {
+          showError("errorNoData");
+          return;
+        }
+
+        const ws = XLSX.utils.json_to_sheet(processedData);
+        const wb = XLSX.utils.book_new();
+
+        XLSX.utils.book_append_sheet(wb, ws, "Refined_Data");
+        XLSX.writeFile(wb, "Refined_Data.xlsx");
+      } catch (e) {
+        console.error(e);
+        showError("errorDownload");
+      }
+    }
+
+    function downloadAsCSV() {
+      try {
+        if (!processedData || processedData.length === 0) {
+          showError("errorNoData");
+          return;
+        }
+
+        const headers = Object.keys(processedData[0]);
+
+        const escapeCsv = (value) => {
+          const str = String(value ?? "");
+          if (str.includes(",") || str.includes('"') || str.includes("\n")) {
+            return `"${str.replace(/"/g, '""')}"`;
+          }
+          return str;
+        };
+
+        const csvRows = [
+          headers.map(escapeCsv).join(","),
+          ...processedData.map((row) => headers.map((header) => escapeCsv(row[header])).join(","))
+        ];
+
+        const csv = csvRows.join("\n");
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+        const link = document.createElement("a");
+
+        link.href = URL.createObjectURL(blob);
+        link.download = "Refined_Data.csv";
+
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        URL.revokeObjectURL(link.href);
+      } catch (error) {
+        console.error("CSV download error:", error);
+        showError("errorDownload");
+      }
+    }
+
+    function setupEventListeners() {
+      document.getElementById("closeErrorBtn").addEventListener("click", hideError);
+
+      document.getElementById("langToggle").addEventListener("click", (event) => {
+        event.stopPropagation();
+        document.getElementById("langDropdown").classList.toggle("open");
+      });
+
+      document.querySelectorAll(".lang-option").forEach((option) => {
+        option.addEventListener("click", () => {
+          updateLanguage(option.getAttribute("data-lang"));
+          document.getElementById("langDropdown").classList.remove("open");
+        });
+      });
+
+      document.addEventListener("click", (event) => {
+        if (!document.getElementById("langDropdownContainer").contains(event.target)) {
+          document.getElementById("langDropdown").classList.remove("open");
+        }
+      });
+
+      const dropzone = document.getElementById("dropzone");
+      const fileInput = document.getElementById("fileInput");
+      const browseBtn = document.getElementById("browseBtn");
+
+      dropzone.addEventListener("click", () => fileInput.click());
+
+      browseBtn.addEventListener("click", (event) => {
+        event.stopPropagation();
+        fileInput.click();
+      });
+
+      fileInput.addEventListener("change", (event) => {
+        handleFileUpload(event.target.files[0]);
+        fileInput.value = "";
+      });
+
+      dropzone.addEventListener("dragover", (event) => {
+        event.preventDefault();
+        dropzone.classList.add("drag-over");
+      });
+
+      dropzone.addEventListener("dragleave", () => {
+        dropzone.classList.remove("drag-over");
+      });
+
+      dropzone.addEventListener("drop", (event) => {
+        event.preventDefault();
+        dropzone.classList.remove("drag-over");
+        handleFileUpload(event.dataTransfer.files[0]);
+      });
+
+      document.getElementById("processBtn").addEventListener("click", processFile);
+      document.getElementById("downloadXlsx").addEventListener("click", downloadAsXLSX);
+      document.getElementById("downloadCsv").addEventListener("click", downloadAsCSV);
+    }
+
+    document.addEventListener("DOMContentLoaded", initializeApp);
+  </script>
+</body>
+</html>
