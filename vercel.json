@@ -1,0 +1,9 @@
+{
+  "redirects": [
+    {
+      "source": "/(.*)",
+      "destination": "https://www.pratix.io/cleaner/$1",
+      "permanent": true
+    }
+  ]
+}
